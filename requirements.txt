@@ -1,0 +1,7 @@
+langgraph
+groq
+pandas
+numpy
+yfinance
+python-dotenv
+pytest
