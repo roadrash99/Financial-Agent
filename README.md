@@ -17,12 +17,12 @@ A **Router** LLM emits a strict-JSON tool plan; Python tools fetch OHLCV (yfinan
 
 ```mermaid
 flowchart LR
-  U[User Question] --> P[Parse intent + timeframes<br/>(deterministic)]
-  P --> R{Router (LLM)<br/>plan as JSON}
-  R -- CALL_TOOLS --> T[Tools node (Python)]
+  U["User Question"] --> P["Parse intent + timeframes<br/>(deterministic)"]
+  P --> R{"Router (LLM)<br/>plan as JSON"}
+  R -- CALL_TOOLS --> T["Tools node (Python)"]
   T --> R
-  R -- FINALIZE --> F[Finalizer (LLM)]
-  F --> A[Final Answer]
+  R -- FINALIZE --> F["Finalizer (LLM)"]
+  F --> A["Final Answer"]
 ```
 
 * **Parse (deterministic):** extract `tickers`, `start/end`, `interval`, `compare`.
