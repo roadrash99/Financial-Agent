@@ -120,20 +120,6 @@ The current implementation uses:
 
 ---
 
-## 🧪 Testing
-
-```bash
-pytest -q
-```
-
-Covers:
-
-* `prices.py` (columns/index, empty ticker handling)
-* `indicators.py` (NaN warm-ups; `macd_hist == macd - macd_signal`)
-* `metrics.py` (return/vol/drawdown/slope; MACD/BB states)
-* Graph smoke test (end-to-end final answer with recent window)
-
----
 
 ## 📏 Design principles
 
@@ -144,9 +130,7 @@ Covers:
 * **Termination guarantees:** bounded loop (≤3); `final_answer` ends runs gracefully.
 * **No advice:** prompts forbid recommendations or forward-looking statements.
 
----
 
-## 🔧 Extending
 
 * **More indicators:** add in `tools/indicators.py`; surface optional fields in `Metrics`.
 * **New data sources:** create a new tool; reference it in `schemas.py` and the router prompt.
