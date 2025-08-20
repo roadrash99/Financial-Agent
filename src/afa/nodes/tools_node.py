@@ -1,28 +1,4 @@
-"""Tools execution node for the Agentic Financial Analyst LangGraph project.
 
-This module implements the Tools node that executes tool calls planned by the Router.
-It processes fetch_prices, compute_indicators, and summarize_metrics operations,
-updating state dataframes and metrics without making any LLM calls.
-
-The Tools node operates as a pure function transformer:
-- Reads the router's plan from state['__plan__']['tool_calls']
-- Executes each tool call in sequence
-- Updates state['dataframes'] and state['metrics'] per ticker
-- Returns only the updates without mutating other state keys
-
-Example usage:
-    >>> state = ConversationState(...)
-    >>> state['__plan__'] = RouterPlan(
-    ...     next_action="CALL_TOOLS",
-    ...     tool_calls=[
-    ...         {"name": "fetch_prices", "args": {"tickers": ["AAPL"], "interval": "1d"}},
-    ...         {"name": "compute_indicators", "args": {}},
-    ...         {"name": "summarize_metrics", "args": {}}
-    ...     ]
-    ... )
-    >>> updates = tools_node(state)
-    >>> # updates contains {"dataframes": {...}, "metrics": {...}}
-"""
 
 from typing import Dict, List, Any
 import pandas as pd
@@ -37,41 +13,15 @@ __all__ = ["tools_node"]
 
 
 def tools_node(state: ConversationState) -> Dict[str, Any]:
-    """
-    Executes tool calls from state['__plan__']['tool_calls'].
-    Updates state['dataframes'] and state['metrics'] per ticker.
-    Returns a dict of updates; does not mutate other keys.
-    
-    Args:
-        state: ConversationState containing the router's plan
-        
-    Returns:
-        Dictionary with 'dataframes' and 'metrics' updates
-        
-    Behavior:
-        - Reads plan from state.get("__plan__", {})
-        - Gets tool_calls from plan.get("tool_calls", [])
-        - Executes each tool call in order:
-          * fetch_prices: Fetches price data and merges into dataframes
-          * compute_indicators: Computes technical indicators for specified/all tickers
-          * summarize_metrics: Generates metric summaries for specified/all tickers
-        - Returns updates without modifying other state keys
-        
-    Edge cases:
-        - Invalid tickers are skipped silently
-        - Empty DataFrames are handled gracefully
-        - Missing tool arguments use sensible defaults
-        - Never raises exceptions on data issues
-    """
-    # Read plan from state
+
     plan = state.get("__plan__", {})
     tool_calls = plan.get("tool_calls", [])
     
-    # Prepare local copies of dataframes and metrics
+
     dfs: Dict[str, pd.DataFrame] = dict(state.get("dataframes", {}))
     metrics: Dict[str, Dict[str, Any]] = dict(state.get("metrics", {}))
     
-    # Execute each tool call in sequence
+
     for tool_call in tool_calls:
         tool_name = tool_call.get("name", "")
         args = tool_call.get("args", {})
@@ -90,25 +40,18 @@ def tools_node(state: ConversationState) -> Dict[str, Any]:
 
 
 def _handle_fetch_prices(dfs: Dict[str, pd.DataFrame], args: Dict[str, Any]) -> None:
-    """
-    Handle fetch_prices tool call.
-    
-    Args:
-        dfs: Dictionary of ticker -> DataFrame to update
-        args: Tool arguments containing tickers, start, end, interval
-    """
-    # Extract arguments with defaults
+
     tickers = args.get("tickers", [])
     start = args.get("start")
     end = args.get("end")
     interval = args.get("interval", "1d")
     
-    # Skip if no tickers specified
+
     if not tickers:
         return
     
     try:
-        # Fetch prices for all tickers
+
         fetched_data = fetch_prices(
             tickers=tickers,
             start=start,
@@ -116,28 +59,21 @@ def _handle_fetch_prices(dfs: Dict[str, pd.DataFrame], args: Dict[str, Any]) -> 
             interval=interval
         )
         
-        # Merge fetched data into existing dataframes
+
         for ticker, df in fetched_data.items():
             if not df.empty:
                 dfs[ticker] = df
-            # If df is empty but ticker was requested, still add it for consistency
+
             elif ticker not in dfs:
                 dfs[ticker] = df
                 
     except Exception:
-        # Handle any fetch errors gracefully - don't let them crash the node
-        # Invalid tickers or network issues should not break the workflow
+
+
         pass
 
 
 def _handle_compute_indicators(dfs: Dict[str, pd.DataFrame], args: Dict[str, Any]) -> None:
-    """
-    Handle compute_indicators tool call.
-    
-    Args:
-        dfs: Dictionary of ticker -> DataFrame to update
-        args: Tool arguments containing optional tickers and indicators
-    """
     # Determine target tickers
     target_tickers = args.get("tickers")
     if target_tickers is None:
@@ -174,15 +110,6 @@ def _handle_summarize_metrics(
     args: Dict[str, Any],
     state: ConversationState
 ) -> None:
-    """
-    Handle summarize_metrics tool call.
-    
-    Args:
-        dfs: Dictionary of ticker -> DataFrame
-        metrics: Dictionary of ticker -> metrics to update
-        args: Tool arguments containing optional tickers and interval
-        state: Full state for accessing parsed interval as fallback
-    """
     # Determine target tickers
     target_tickers = args.get("tickers")
     if target_tickers is None:
